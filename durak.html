@@ -155,7 +155,8 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     <h2>Новая партия</h2>
     <div class="q">
       <span class="label">Сколько карт в колоде?</span>
-      <div class="bigrow" style="--n:2">
+      <div class="bigrow" style="--n:3">
+        <button class="big" id="sd24" data-sdeck="24">24</button>
         <button class="big" id="sd36" data-sdeck="36">36</button>
         <button class="big" id="sd52" data-sdeck="52">52</button>
       </div>
@@ -231,7 +232,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
   try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && s.marks) st = Object.assign(st, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 
-  const ranks = () => st.deck === 36 ? RANKS52.slice(4) : RANKS52;
+  const ranks = () => st.deck === 24 ? RANKS52.slice(7) : st.deck === 36 ? RANKS52.slice(4) : RANKS52;
   const $ = (id) => document.getElementById(id);
 
   function setMark(cardId) {
@@ -250,7 +251,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     const showSetup = setupOpen || !st.started;
     $("setup").hidden = !showSetup; $("game").hidden = showSetup;
     $("cancelSetup").hidden = !st.started;
-    ["36","52"].forEach(d => $("sd" + d).setAttribute("aria-pressed", String(pend.deck === +d)));
+    ["24","36","52"].forEach(d => $("sd" + d).setAttribute("aria-pressed", String(pend.deck === +d)));
     $("setupSuits").innerHTML = SUITS.map(s =>
       `<button class="big suit ${s.red ? "red" : ""}" id="st-${s.id}" data-strump="${s.id}" aria-pressed="${pend.trump === s.id}">${s.sym}<small>${s.name}</small></button>`
     ).join("");
