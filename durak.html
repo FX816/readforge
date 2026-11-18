@@ -1,0 +1,371 @@
+<title>Счётчик карт: Дурак</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;800&display=swap">
+<style>
+/* Layout: sticky mode bar on top, suit rows × rank columns of tappable cards, stats below. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --fg: #1a2230;
+  --muted: #5d6878;
+  --line: #d3d9e1;
+  --red: #c4283c;
+  --black: #1a2230;
+  --gone-bg: #dfe3e8;
+  --gone-fg: #9aa3ae;
+  --mine: #2463d1;
+  --mine-bg: #dbe7fb;
+  --opp: #c46a00;
+  --opp-bg: #fbe9d2;
+  --trump: #0f8a6c;
+  --trump-bg: #d7f2ea;
+  --table: #7a3fd1;
+  --table-bg: #ece2fb;
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161d; --surface: #1b222c; --fg: #e8ecf1; --muted: #9aa5b4; --line: #2c3542;
+  --red: #ff6b7c; --black: #e8ecf1; --gone-bg: #161b22; --gone-fg: #4c5562;
+  --mine: #6ea0ff; --mine-bg: #1d3157; --opp: #ffb156; --opp-bg: #4a3115;
+  --trump: #4fd6b1; --trump-bg: #123a31; --table: #b88cff; --table-bg: #33204f; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #1b222c; --fg: #e8ecf1; --muted: #9aa5b4; --line: #2c3542;
+  --red: #ff6b7c; --black: #e8ecf1; --gone-bg: #161b22; --gone-fg: #4c5562;
+  --mine: #6ea0ff; --mine-bg: #1d3157; --opp: #ffb156; --opp-bg: #4a3115;
+  --trump: #4fd6b1; --trump-bg: #123a31; --table: #b88cff; --table-bg: #33204f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-size: 1.45rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.sub { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 800; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; cursor: pointer; color: var(--fg); }
+button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
+.chip {
+  border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 7px 14px; font-weight: 600; font-size: .9rem;
+}
+.chip[aria-pressed="true"] { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+.suitchip { font-size: 1.15rem; padding: 4px 14px; }
+.suitchip.red { color: var(--red); }
+.suitchip[aria-pressed="true"] { background: var(--trump-bg); border-color: var(--trump); color: inherit; }
+.suitchip.red[aria-pressed="true"] { color: var(--red); }
+
+.modes {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 8px; display: grid; gap: 6px;
+}
+.modegrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.mode {
+  border: 2px solid var(--line); background: var(--surface); border-radius: 10px;
+  padding: 9px 4px; font-weight: 800; font-size: .82rem; line-height: 1.15;
+}
+.mode .k { display: block; font-size: .7rem; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.mode[data-m="gone"][aria-pressed="true"] { border-color: var(--gone-fg); background: var(--gone-bg); }
+.mode[data-m="mine"][aria-pressed="true"] { border-color: var(--mine); background: var(--mine-bg); }
+.mode[data-m="opp"][aria-pressed="true"] { border-color: var(--opp); background: var(--opp-bg); }
+.mode[data-m="unknown"][aria-pressed="true"] { border-color: var(--fg); }
+.mode[data-m="table"][aria-pressed="true"] { border-color: var(--table); background: var(--table-bg); }
+.card.table { background: var(--table-bg); border-color: var(--table); border-width: 2.5px; transform: translateY(-3px); }
+.card.table .tag { color: var(--table); }
+.tablebar { background: var(--surface); border: 2px solid var(--table); border-radius: 12px; padding: 10px; display: grid; gap: 8px; }
+.tablebar .lst { min-height: 0; }
+.tablebar .pill { border-color: var(--table); background: var(--table-bg); }
+.resolve { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.resolve button { border: 2px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 4px; font-weight: 800; font-size: .86rem; }
+.resolve #rGone { border-color: var(--gone-fg); }
+.resolve #rOpp { border-color: var(--opp); color: var(--opp); }
+.resolve #rMine { border-color: var(--mine); color: var(--mine); }
+
+.board { display: grid; gap: 8px; }
+.suitrow { display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: center; }
+.suitlab { font-size: 1.5rem; text-align: center; line-height: 1; }
+.suitlab.red { color: var(--red); }
+.suitlab.trump { background: var(--trump-bg); border-radius: 8px; padding: 6px 0; outline: 2px solid var(--trump); }
+.cards { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
+.card {
+  aspect-ratio: 5 / 7; max-width: 100%; border-radius: 7px; border: 1.5px solid var(--line);
+  background: var(--surface); display: grid; place-items: center; padding: 0;
+  font-family: var(--display); font-weight: 700; font-size: clamp(.78rem, 3.2vw, 1.1rem);
+  position: relative; transition: transform .08s, background .12s;
+  color: var(--black); -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.card.red { color: var(--red); }
+.card:active { transform: scale(.94); }
+.card .s { display: block; font-size: .8em; font-family: var(--body); }
+.card.gone { background: var(--gone-bg); color: var(--gone-fg); border-style: dashed; }
+.card.gone::after { content: ""; position: absolute; left: 15%; right: 15%; top: 50%; border-top: 2px solid var(--gone-fg); transform: rotate(-35deg); }
+.card.mine { background: var(--mine-bg); border-color: var(--mine); }
+.card.opp { background: var(--opp-bg); border-color: var(--opp); }
+.card .tag {
+  position: absolute; top: 2px; right: 3px; font-family: var(--body); font-size: .55rem; font-weight: 800;
+}
+.card.mine .tag { color: var(--mine); }
+.card.opp .tag { color: var(--opp); }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.stat b { font-family: var(--display); font-size: 1.6rem; font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
+.stat.trumpstat { border-color: var(--trump); }
+.stat.trumpstat b { color: var(--trump); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.panel h2 { font-family: var(--display); font-size: .95rem; margin: 0; }
+.lst { display: flex; flex-wrap: wrap; gap: 5px; min-height: 24px; }
+.pill { border-radius: 6px; padding: 3px 7px; font-weight: 800; font-size: .88rem; background: var(--bg); border: 1px solid var(--line); }
+.pill.red { color: var(--red); }
+.pill.tr { border-color: var(--trump); background: var(--trump-bg); }
+.empty { color: var(--muted); font-size: .88rem; }
+.persuit { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+.persuit div { background: var(--bg); border-radius: 8px; padding: 8px 4px; font-variant-numeric: tabular-nums; font-weight: 800; }
+.persuit .red { color: var(--red); }
+.persuit .trump { outline: 2px solid var(--trump); background: var(--trump-bg); }
+.persuit small { display: block; color: var(--muted); font-weight: 600; font-size: .72rem; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 16px; font-weight: 800; }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn:disabled { opacity: .45; cursor: default; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 600; }
+.setup { display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+.setup h2 { font-family: var(--display); font-size: 1.2rem; margin: 0; }
+.setup .q { display: grid; gap: 8px; }
+.bigrow { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 8px; }
+.big { border: 2px solid var(--line); background: var(--bg); border-radius: 12px; padding: 14px 6px; font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+.big.suit { font-size: 2rem; padding: 10px 4px; line-height: 1; }
+.big.suit small { display: block; font-family: var(--body); font-size: .72rem; font-weight: 600; color: var(--muted); margin-top: 4px; }
+.big.red { color: var(--red); }
+.big[aria-pressed="true"] { border-color: var(--trump); background: var(--trump-bg); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); font-size: 1rem; padding: 14px; }
+.summary { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-weight: 800; }
+.summary .tr { font-size: 1.3rem; background: var(--trump-bg); border: 2px solid var(--trump); border-radius: 8px; padding: 2px 10px; }
+.summary .tr.red { color: var(--red); }
+.help { color: var(--muted); font-size: .86rem; line-height: 1.5; margin: 0; max-width: 65ch; }
+@media (max-width: 420px) { .mode { font-size: .74rem; padding: 8px 2px; } .mode .k { font-size: .62rem; } .suitrow { grid-template-columns: 26px 1fr; } .suitlab { font-size: 1.2rem; } .cards { gap: 3px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Счётчик карт: Дурак</h1>
+      <p class="sub">Отмечай карты по ходу партии и смотри, что ещё осталось в игре.</p>
+    </div>
+    <div class="summary" id="summary"></div>
+  </header>
+
+  <section class="setup" id="setup" hidden>
+    <h2>Новая партия</h2>
+    <div class="q">
+      <span class="label">Сколько карт в колоде?</span>
+      <div class="bigrow" style="--n:3">
+        <button class="big" id="sd24" data-sdeck="24">24</button>
+        <button class="big" id="sd36" data-sdeck="36">36</button>
+        <button class="big" id="sd52" data-sdeck="52">52</button>
+      </div>
+    </div>
+    <div class="q">
+      <span class="label">Какая масть козырная?</span>
+      <div class="bigrow" style="--n:4" id="setupSuits"></div>
+    </div>
+    <button class="btn primary" id="start" disabled>Выбери колоду и козырь</button>
+    <button class="btn" id="cancelSetup" hidden>Вернуться к текущей партии</button>
+  </section>
+
+  <div id="game" class="wrap" style="max-width:none">
+
+  <div class="modes">
+    <span class="label">Нажатие на карту отмечает её как</span>
+    <div class="modegrid" role="group" aria-label="Режим отметки">
+      <button class="mode" id="m-table" data-m="table">На стол<span class="k">пока неясно</span></button>
+      <button class="mode" id="m-gone" data-m="gone">Бито<span class="k">ушла</span></button>
+      <button class="mode" id="m-opp" data-m="opp">Соперник<span class="k">у него</span></button>
+      <button class="mode" id="m-mine" data-m="mine">У меня<span class="k">в руке</span></button>
+      <button class="mode" id="m-unknown" data-m="unknown">Сброс<span class="k">неизвестна</span></button>
+    </div>
+    <div class="tablebar" id="tablebar" hidden>
+      <span class="label">На столе — чем закончился ход?</span>
+      <div class="lst" id="tableList"></div>
+      <div class="resolve">
+        <button id="rGone">Бито</button>
+        <button id="rOpp">Соперник взял</button>
+        <button id="rMine">Я взял</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="actions">
+    <button class="btn" id="undo">↶ Отменить</button>
+    <button class="btn danger" id="reset">Новая партия</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="label">Неизвестных</span><b id="sUnknown">0</b></div>
+    <div class="stat trumpstat"><span class="label">Козырей не видно</span><b id="sTrumps">0</b></div>
+    <div class="stat"><span class="label">В бито</span><b id="sGone">0</b></div>
+    <div class="stat"><span class="label">У соперника (известно)</span><b id="sOpp">0</b></div>
+    <div class="stat"><span class="label">На столе</span><b id="sTable">0</b></div>
+  </div>
+
+  <div class="panel">
+    <h2>Неизвестные карты по мастям</h2>
+    <div class="persuit" id="perSuit"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Старшие козыри, которые ещё где-то есть</h2>
+    <div class="lst" id="topTrumps"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Точно у соперника</h2>
+    <div class="lst" id="oppList"></div>
+  </div>
+
+  <p class="help">Как пользоваться: во время хода выбери «На стол» и нажимай карты, которые выкладывают. Когда ход закончился, нажми, что с ними стало: «Бито», «Соперник взял» или «Я взял», и все карты со стола отметятся разом. Остальные режимы отмечают по одной карте. «Бито» — карта ушла из игры. «У соперника» — он её взял, и ты знаешь, что она у него. Когда соперник отбивается или ходит такой картой, переключись на «Бито» и нажми её снова. «Неизвестные» — карты, которые ещё в колоде или в руке у соперника. Повторное нажатие в том же режиме снимает отметку. Отметки сохраняются в этом браузере.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SUITS = [
+    { id: "s", sym: "♠", red: false, name: "Пики" },
+    { id: "c", sym: "♣", red: false, name: "Трефы" },
+    { id: "h", sym: "♥", red: true,  name: "Червы" },
+    { id: "d", sym: "♦", red: true,  name: "Бубны" },
+  ];
+  const RANKS52 = ["2","3","4","5","6","7","8","9","10","В","Д","К","Т"];
+  const TAG = { mine: "Я", opp: "С", table: "▲" };
+  const KEY = "durak-counter-v1";
+
+  let st = { deck: 36, trump: "h", mode: "gone", marks: {}, started: false };
+  let pend = { deck: null, trump: null }, setupOpen = false;
+  let history = [];
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && s.marks) st = Object.assign(st, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+  const ranks = () => st.deck === 24 ? RANKS52.slice(7) : st.deck === 36 ? RANKS52.slice(4) : RANKS52;
+  const $ = (id) => document.getElementById(id);
+
+  function setMark(cardId) {
+    const cur = st.marks[cardId] || "unknown";
+    const next = (cur === st.mode) ? "unknown" : st.mode;
+    if (next === cur) return;
+    apply([[cardId, next]]);
+  }
+  function apply(list) {
+    if (!list.length) return;
+    history.push(list.map(([id]) => ({ id, prev: st.marks[id] || "unknown" })));
+    if (history.length > 200) history.shift();
+    list.forEach(([id, v]) => { if (v === "unknown") delete st.marks[id]; else st.marks[id] = v; });
+    save(); render();
+  }
+  function resolveTable(to) {
+    apply(Object.keys(st.marks).filter(id => st.marks[id] === "table").map(id => [id, to]));
+  }
+
+  function render() {
+    const R = ranks();
+    // deck & trump chips
+    const showSetup = setupOpen || !st.started;
+    $("setup").hidden = !showSetup; $("game").hidden = showSetup;
+    $("cancelSetup").hidden = !st.started;
+    ["24","36","52"].forEach(d => $("sd" + d).setAttribute("aria-pressed", String(pend.deck === +d)));
+    $("setupSuits").innerHTML = SUITS.map(s =>
+      `<button class="big suit ${s.red ? "red" : ""}" id="st-${s.id}" data-strump="${s.id}" aria-pressed="${pend.trump === s.id}">${s.sym}<small>${s.name}</small></button>`
+    ).join("");
+    const ready = pend.deck && pend.trump;
+    $("start").disabled = !ready;
+    $("start").textContent = ready ? "Начать партию" : (!pend.deck ? "Выбери размер колоды" : "Выбери козырь");
+    const T = SUITS.find(s => s.id === st.trump);
+    $("summary").innerHTML = st.started && !showSetup
+      ? `<span>${st.deck} карт</span><span>Козырь</span><span class="tr ${T.red ? "red" : ""}">${T.sym}</span>` : "";
+    if (showSetup) return;
+    document.querySelectorAll(".mode").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === st.mode)));
+
+    // board: trump row last so it stands apart
+    const order = SUITS.filter(s => s.id !== st.trump).concat(SUITS.filter(s => s.id === st.trump));
+    $("board").innerHTML = order.map(s => {
+      const cells = R.map(r => {
+        const id = r + s.id, m = st.marks[id] || "";
+        const tag = TAG[m] ? `<span class="tag">${TAG[m]}</span>` : "";
+        const label = `${r}${s.sym}${m === "gone" ? ", бито" : m === "mine" ? ", у меня" : m === "opp" ? ", у соперника" : m === "table" ? ", на столе" : ""}`;
+        return `<button class="card ${s.red ? "red" : ""} ${m}" data-card="${id}" aria-label="${label}">${tag}<span>${r}<span class="s">${s.sym}</span></span></button>`;
+      }).join("");
+      return `<div class="suitrow"><div class="suitlab ${s.red ? "red" : ""} ${s.id === st.trump ? "trump" : ""}" title="${s.name}">${s.sym}</div><div class="cards" style="--n:${R.length}">${cells}</div></div>`;
+    }).join("");
+
+    // stats
+    let unknown = 0, gone = 0, opp = 0, trumps = 0;
+    const tableCards = [];
+    const per = {}; SUITS.forEach(s => per[s.id] = 0);
+    const top = [], oppCards = [];
+    SUITS.forEach(s => R.forEach(r => {
+      const id = r + s.id, m = st.marks[id];
+      if (!m) { unknown++; per[s.id]++; if (s.id === st.trump) trumps++; }
+      if (m === "gone") gone++;
+      if (m === "table") tableCards.push({ r, s });
+      if (m === "opp") { opp++; oppCards.push({ r, s }); }
+      if (s.id === st.trump && (!m || m === "opp")) top.push({ r, s, opp: m === "opp" });
+    }));
+    $("sUnknown").textContent = unknown;
+    $("sTrumps").textContent = trumps;
+    $("sGone").textContent = gone;
+    $("sOpp").textContent = opp;
+    $("sTable").textContent = tableCards.length;
+    $("tablebar").hidden = tableCards.length === 0;
+    $("tableList").innerHTML = tableCards.map(c => `<span class="pill ${c.s.red ? "red" : ""}">${c.r}${c.s.sym}</span>`).join("");
+    $("perSuit").innerHTML = SUITS.map(s =>
+      `<div class="${s.red ? "red" : ""} ${s.id === st.trump ? "trump" : ""}">${s.sym} ${per[s.id]}<small>из ${R.length}</small></div>`
+    ).join("");
+
+    const pill = (c, extra) => `<span class="pill ${c.s.red ? "red" : ""} ${extra || ""}">${c.r}${c.s.sym}</span>`;
+    const topSorted = top.reverse().slice(0, 6);
+    $("topTrumps").innerHTML = topSorted.length
+      ? topSorted.map(c => pill(c, "tr") + (c.opp ? '<span class="empty">(у соперника)</span>' : "")).join("")
+      : '<span class="empty">Козырей больше нет — все вышли или у тебя.</span>';
+    oppCards.sort((a, b) => (a.s.id === st.trump) - (b.s.id === st.trump) || R.indexOf(a.r) - R.indexOf(b.r));
+    $("oppList").innerHTML = oppCards.length
+      ? oppCards.map(c => pill(c, c.s.id === st.trump ? "tr" : "")).join("")
+      : '<span class="empty">Пока ничего. Отметь карты, которые соперник забрал.</span>';
+    $("undo").disabled = history.length === 0;
+  }
+
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("button");
+    if (!t) return;
+    if (t.dataset.card) return setMark(t.dataset.card);
+    if (t.dataset.m) { st.mode = t.dataset.m; save(); return render(); }
+    if (t.dataset.sdeck) { pend.deck = +t.dataset.sdeck; return render(); }
+    if (t.dataset.strump) { pend.trump = t.dataset.strump; return render(); }
+    if (t.id === "start") {
+      Object.assign(st, { deck: pend.deck, trump: pend.trump, marks: {}, started: true, mode: "table" });
+      history = []; setupOpen = false; save(); window.scrollTo(0, 0); return render();
+    }
+    if (t.id === "rGone") return resolveTable("gone");
+    if (t.id === "rOpp") return resolveTable("opp");
+    if (t.id === "rMine") return resolveTable("mine");
+    if (t.id === "cancelSetup") { setupOpen = false; return render(); }
+    if (t.id === "undo") {
+      const h = history.pop(); if (!h) return;
+      h.forEach(c => { if (c.prev === "unknown") delete st.marks[c.id]; else st.marks[c.id] = c.prev; });
+      save(); return render();
+    }
+    if (t.id === "reset") { pend = { deck: null, trump: null }; setupOpen = true; window.scrollTo(0, 0); return render(); }
+  });
+
+  render();
+})();
+</script>

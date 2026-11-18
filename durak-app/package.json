@@ -1,0 +1,19 @@
+{
+  "name": "durak-counter",
+  "productName": "Дурак",
+  "version": "1.0.0",
+  "description": "Счётчик карт для игры в дурака",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "mac": "electron-packager . Durak --platform=darwin --arch=universal --icon=icon.icns --out=dist --overwrite --ignore=^/dist --app-bundle-id=local.durak.counter",
+    "mac-arm": "electron-packager . Durak --platform=darwin --arch=arm64 --icon=icon.icns --out=dist --overwrite --ignore=^/dist --app-bundle-id=local.durak.counter",
+    "mac-intel": "electron-packager . Durak --platform=darwin --arch=x64 --icon=icon.icns --out=dist --overwrite --ignore=^/dist --app-bundle-id=local.durak.counter",
+    "serve": "npx --yes serve www"
+  },
+  "devDependencies": {
+    "@electron/packager": "18.3.6",
+    "electron": "33.2.1"
+  }
+}
