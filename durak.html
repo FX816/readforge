@@ -20,6 +20,8 @@
   --opp-bg: #fbe9d2;
   --trump: #0f8a6c;
   --trump-bg: #d7f2ea;
+  --table: #7a3fd1;
+  --table-bg: #ece2fb;
   --display: "Unbounded", "Arial Black", system-ui, sans-serif;
   --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -27,13 +29,13 @@
   --bg: #11161d; --surface: #1b222c; --fg: #e8ecf1; --muted: #9aa5b4; --line: #2c3542;
   --red: #ff6b7c; --black: #e8ecf1; --gone-bg: #161b22; --gone-fg: #4c5562;
   --mine: #6ea0ff; --mine-bg: #1d3157; --opp: #ffb156; --opp-bg: #4a3115;
-  --trump: #4fd6b1; --trump-bg: #123a31; color-scheme: dark;
+  --trump: #4fd6b1; --trump-bg: #123a31; --table: #b88cff; --table-bg: #33204f; color-scheme: dark;
 } }
 :root[data-theme="dark"] {
   --bg: #11161d; --surface: #1b222c; --fg: #e8ecf1; --muted: #9aa5b4; --line: #2c3542;
   --red: #ff6b7c; --black: #e8ecf1; --gone-bg: #161b22; --gone-fg: #4c5562;
   --mine: #6ea0ff; --mine-bg: #1d3157; --opp: #ffb156; --opp-bg: #4a3115;
-  --trump: #4fd6b1; --trump-bg: #123a31; color-scheme: dark;
+  --trump: #4fd6b1; --trump-bg: #123a31; --table: #b88cff; --table-bg: #33204f; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
@@ -65,7 +67,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
   background: var(--bg); padding-block: 8px; display: grid; gap: 6px;
 }
-.modegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.modegrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
 .mode {
   border: 2px solid var(--line); background: var(--surface); border-radius: 10px;
   padding: 9px 4px; font-weight: 800; font-size: .82rem; line-height: 1.15;
@@ -75,6 +77,17 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
 .mode[data-m="mine"][aria-pressed="true"] { border-color: var(--mine); background: var(--mine-bg); }
 .mode[data-m="opp"][aria-pressed="true"] { border-color: var(--opp); background: var(--opp-bg); }
 .mode[data-m="unknown"][aria-pressed="true"] { border-color: var(--fg); }
+.mode[data-m="table"][aria-pressed="true"] { border-color: var(--table); background: var(--table-bg); }
+.card.table { background: var(--table-bg); border-color: var(--table); border-width: 2.5px; transform: translateY(-3px); }
+.card.table .tag { color: var(--table); }
+.tablebar { background: var(--surface); border: 2px solid var(--table); border-radius: 12px; padding: 10px; display: grid; gap: 8px; }
+.tablebar .lst { min-height: 0; }
+.tablebar .pill { border-color: var(--table); background: var(--table-bg); }
+.resolve { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.resolve button { border: 2px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 4px; font-weight: 800; font-size: .86rem; }
+.resolve #rGone { border-color: var(--gone-fg); }
+.resolve #rOpp { border-color: var(--opp); color: var(--opp); }
+.resolve #rMine { border-color: var(--mine); color: var(--mine); }
 
 .board { display: grid; gap: 8px; }
 .suitrow { display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: center; }
@@ -103,7 +116,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
 .card.opp .tag { color: var(--opp); }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
 
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 8px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .stat b { font-family: var(--display); font-size: 1.6rem; font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
 .stat.trumpstat { border-color: var(--trump); }
@@ -139,7 +152,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
 .summary .tr { font-size: 1.3rem; background: var(--trump-bg); border: 2px solid var(--trump); border-radius: 8px; padding: 2px 10px; }
 .summary .tr.red { color: var(--red); }
 .help { color: var(--muted); font-size: .86rem; line-height: 1.5; margin: 0; max-width: 65ch; }
-@media (max-width: 420px) { .suitrow { grid-template-columns: 26px 1fr; } .suitlab { font-size: 1.2rem; } .cards { gap: 3px; } }
+@media (max-width: 420px) { .mode { font-size: .74rem; padding: 8px 2px; } .mode .k { font-size: .62rem; } .suitrow { grid-template-columns: 26px 1fr; } .suitlab { font-size: 1.2rem; } .cards { gap: 3px; } }
 </style>
 
 <div class="wrap">
@@ -174,10 +187,20 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
   <div class="modes">
     <span class="label">Нажатие на карту отмечает её как</span>
     <div class="modegrid" role="group" aria-label="Режим отметки">
+      <button class="mode" id="m-table" data-m="table">На стол<span class="k">пока неясно</span></button>
       <button class="mode" id="m-gone" data-m="gone">Бито<span class="k">ушла</span></button>
-      <button class="mode" id="m-opp" data-m="opp">У соперника<span class="k">забрал</span></button>
+      <button class="mode" id="m-opp" data-m="opp">Соперник<span class="k">у него</span></button>
       <button class="mode" id="m-mine" data-m="mine">У меня<span class="k">в руке</span></button>
-      <button class="mode" id="m-unknown" data-m="unknown">Сбросить<span class="k">неизвестна</span></button>
+      <button class="mode" id="m-unknown" data-m="unknown">Сброс<span class="k">неизвестна</span></button>
+    </div>
+    <div class="tablebar" id="tablebar" hidden>
+      <span class="label">На столе — чем закончился ход?</span>
+      <div class="lst" id="tableList"></div>
+      <div class="resolve">
+        <button id="rGone">Бито</button>
+        <button id="rOpp">Соперник взял</button>
+        <button id="rMine">Я взял</button>
+      </div>
     </div>
   </div>
 
@@ -193,6 +216,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     <div class="stat trumpstat"><span class="label">Козырей не видно</span><b id="sTrumps">0</b></div>
     <div class="stat"><span class="label">В бито</span><b id="sGone">0</b></div>
     <div class="stat"><span class="label">У соперника (известно)</span><b id="sOpp">0</b></div>
+    <div class="stat"><span class="label">На столе</span><b id="sTable">0</b></div>
   </div>
 
   <div class="panel">
@@ -210,7 +234,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     <div class="lst" id="oppList"></div>
   </div>
 
-  <p class="help">Как пользоваться: выбери режим сверху и нажимай на карты. «Бито» — карта ушла из игры. «У соперника» — он её взял, и ты знаешь, что она у него. Когда соперник отбивается или ходит такой картой, переключись на «Бито» и нажми её снова. «Неизвестные» — карты, которые ещё в колоде или в руке у соперника. Повторное нажатие в том же режиме снимает отметку. Отметки сохраняются в этом браузере.</p>
+  <p class="help">Как пользоваться: во время хода выбери «На стол» и нажимай карты, которые выкладывают. Когда ход закончился, нажми, что с ними стало: «Бито», «Соперник взял» или «Я взял», и все карты со стола отметятся разом. Остальные режимы отмечают по одной карте. «Бито» — карта ушла из игры. «У соперника» — он её взял, и ты знаешь, что она у него. Когда соперник отбивается или ходит такой картой, переключись на «Бито» и нажми её снова. «Неизвестные» — карты, которые ещё в колоде или в руке у соперника. Повторное нажатие в том же режиме снимает отметку. Отметки сохраняются в этом браузере.</p>
   </div>
 </div>
 
@@ -223,7 +247,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     { id: "d", sym: "♦", red: true,  name: "Бубны" },
   ];
   const RANKS52 = ["2","3","4","5","6","7","8","9","10","В","Д","К","Т"];
-  const TAG = { mine: "Я", opp: "С" };
+  const TAG = { mine: "Я", opp: "С", table: "▲" };
   const KEY = "durak-counter-v1";
 
   let st = { deck: 36, trump: "h", mode: "gone", marks: {}, started: false };
@@ -239,10 +263,17 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     const cur = st.marks[cardId] || "unknown";
     const next = (cur === st.mode) ? "unknown" : st.mode;
     if (next === cur) return;
-    history.push({ id: cardId, prev: cur });
+    apply([[cardId, next]]);
+  }
+  function apply(list) {
+    if (!list.length) return;
+    history.push(list.map(([id]) => ({ id, prev: st.marks[id] || "unknown" })));
     if (history.length > 200) history.shift();
-    if (next === "unknown") delete st.marks[cardId]; else st.marks[cardId] = next;
+    list.forEach(([id, v]) => { if (v === "unknown") delete st.marks[id]; else st.marks[id] = v; });
     save(); render();
+  }
+  function resolveTable(to) {
+    apply(Object.keys(st.marks).filter(id => st.marks[id] === "table").map(id => [id, to]));
   }
 
   function render() {
@@ -270,7 +301,7 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
       const cells = R.map(r => {
         const id = r + s.id, m = st.marks[id] || "";
         const tag = TAG[m] ? `<span class="tag">${TAG[m]}</span>` : "";
-        const label = `${r}${s.sym}${m === "gone" ? ", бито" : m === "mine" ? ", у меня" : m === "opp" ? ", у соперника" : ""}`;
+        const label = `${r}${s.sym}${m === "gone" ? ", бито" : m === "mine" ? ", у меня" : m === "opp" ? ", у соперника" : m === "table" ? ", на столе" : ""}`;
         return `<button class="card ${s.red ? "red" : ""} ${m}" data-card="${id}" aria-label="${label}">${tag}<span>${r}<span class="s">${s.sym}</span></span></button>`;
       }).join("");
       return `<div class="suitrow"><div class="suitlab ${s.red ? "red" : ""} ${s.id === st.trump ? "trump" : ""}" title="${s.name}">${s.sym}</div><div class="cards" style="--n:${R.length}">${cells}</div></div>`;
@@ -278,12 +309,14 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
 
     // stats
     let unknown = 0, gone = 0, opp = 0, trumps = 0;
+    const tableCards = [];
     const per = {}; SUITS.forEach(s => per[s.id] = 0);
     const top = [], oppCards = [];
     SUITS.forEach(s => R.forEach(r => {
       const id = r + s.id, m = st.marks[id];
       if (!m) { unknown++; per[s.id]++; if (s.id === st.trump) trumps++; }
       if (m === "gone") gone++;
+      if (m === "table") tableCards.push({ r, s });
       if (m === "opp") { opp++; oppCards.push({ r, s }); }
       if (s.id === st.trump && (!m || m === "opp")) top.push({ r, s, opp: m === "opp" });
     }));
@@ -291,6 +324,9 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     $("sTrumps").textContent = trumps;
     $("sGone").textContent = gone;
     $("sOpp").textContent = opp;
+    $("sTable").textContent = tableCards.length;
+    $("tablebar").hidden = tableCards.length === 0;
+    $("tableList").innerHTML = tableCards.map(c => `<span class="pill ${c.s.red ? "red" : ""}">${c.r}${c.s.sym}</span>`).join("");
     $("perSuit").innerHTML = SUITS.map(s =>
       `<div class="${s.red ? "red" : ""} ${s.id === st.trump ? "trump" : ""}">${s.sym} ${per[s.id]}<small>из ${R.length}</small></div>`
     ).join("");
@@ -315,13 +351,16 @@ button:focus-visible { outline: 3px solid var(--mine); outline-offset: 2px; }
     if (t.dataset.sdeck) { pend.deck = +t.dataset.sdeck; return render(); }
     if (t.dataset.strump) { pend.trump = t.dataset.strump; return render(); }
     if (t.id === "start") {
-      Object.assign(st, { deck: pend.deck, trump: pend.trump, marks: {}, started: true, mode: "gone" });
+      Object.assign(st, { deck: pend.deck, trump: pend.trump, marks: {}, started: true, mode: "table" });
       history = []; setupOpen = false; save(); window.scrollTo(0, 0); return render();
     }
+    if (t.id === "rGone") return resolveTable("gone");
+    if (t.id === "rOpp") return resolveTable("opp");
+    if (t.id === "rMine") return resolveTable("mine");
     if (t.id === "cancelSetup") { setupOpen = false; return render(); }
     if (t.id === "undo") {
       const h = history.pop(); if (!h) return;
-      if (h.prev === "unknown") delete st.marks[h.id]; else st.marks[h.id] = h.prev;
+      h.forEach(c => { if (c.prev === "unknown") delete st.marks[c.id]; else st.marks[c.id] = c.prev; });
       save(); return render();
     }
     if (t.id === "reset") { pend = { deck: null, trump: null }; setupOpen = true; window.scrollTo(0, 0); return render(); }
